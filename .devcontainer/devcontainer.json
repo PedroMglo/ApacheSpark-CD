@@ -6,6 +6,11 @@
       "extensions": ["ms-python.python"]
     }
   },
-  "postCreateCommand": "pip install -r requirements.txt && bash scripts/get_data.sh",
-  "remoteUser": "vscode"
+  "workspaceFolder": "/workspaces/ApacheSpark-CD",
+  "remoteUser": "vscode",
+  "postCreateCommand": "python3 -m venv venv && ./venv/bin/python -m pip install --upgrade pip && ./venv/bin/pip install -r requirements.txt && bash scripts/get_data.sh",
+  "remoteEnv": {
+    "VIRTUAL_ENV": "/workspaces/ApacheSpark-CD/venv",
+    "PYSPARK_PYTHON": "/workspaces/ApacheSpark-CD/venv/bin/python"
+  }
 }
