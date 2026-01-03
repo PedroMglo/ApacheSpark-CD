@@ -1,0 +1,11 @@
+{
+  "name": "pyspark-dev",
+  "build": { "dockerfile": "Dockerfile" },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt && bash scripts/get_data.sh",
+  "remoteUser": "vscode"
+}
