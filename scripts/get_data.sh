@@ -5,7 +5,7 @@ DATA_DIR="data"
 MARKER="$DATA_DIR/.ready"
 
 ASSET_NAME="data.zip"
-RELEASE_TAG="Database_test"
+RELEASE_TAG="Spark-BD_V1"
 
 mkdir -p "$DATA_DIR"
 
