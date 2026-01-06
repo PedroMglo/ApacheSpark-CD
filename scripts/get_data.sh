@@ -1,29 +1,26 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-if [ ! -d "data" ]; then
+REPO="oioioioi3/ApacheSpark-CD"
+RELEASE_TAG="Spark-BD_V1"
+DATA_DIR="data"
+MARKER="$DATA_DIR/.ready"
+
+if [ ! -d "$DATA_DIR" ]; then
   echo "A descarregar datasets..."
-
-    #!/usr/bin/env bash
-  set -euo pipefail
-
-  REPO="oioioioi3/ApacheSpark-CD"   # <-- muda se necessário
-  RELEASE_TAG="Spark-BD_V1"         # a tua tag / release
-  DATA_DIR="data"
-  MARKER="$DATA_DIR/.ready"
-
   mkdir -p "$DATA_DIR"
 
   echo "Checking GitHub auth..."
   gh auth status -h github.com >/dev/null
 
   echo "Finding latest versioned data asset in release $RELEASE_TAG..."
-
   assets="$(
-    gh release view "$RELEASE_TAG" --repo "$REPO" --json assets --jq '.assets[].name'
+    gh release view "$RELEASE_TAG" \
+      --repo "$REPO" \
+      --json assets \
+      --jq '.assets[].name'
   )"
 
-  # 1) Preferir data_YYYY-MM-DD.zip
   latest_date="$(
     printf '%s\n' "$assets" \
       | sed -n 's/^\(data_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\.zip\)$/\1/p' \
@@ -31,7 +28,6 @@ if [ ! -d "data" ]; then
       | tail -n 1
   )"
 
-  # 2) Fallback: data_vX.Y.Z.zip (ordenar por versão)
   latest_semver="$(
     printf '%s\n' "$assets" \
       | sed -n 's/^\(data_v[0-9]\+\.[0-9]\+\.[0-9]\+\.zip\)$/\1/p' \
@@ -48,7 +44,6 @@ if [ ! -d "data" ]; then
     exit 1
   fi
 
-  # Se já tivermos exatamente esta versão, não faz nada
   if [ -f "$MARKER" ] && grep -qx "$ASSET_NAME" "$MARKER"; then
     echo "Data already present ($ASSET_NAME)."
     exit 0
@@ -66,14 +61,8 @@ if [ ! -d "data" ]; then
   echo "Unzipping into repo root..."
   unzip -o "$tmpdir/$ASSET_NAME" -d .
 
-  # Guardar qual foi a versão instalada
   echo "$ASSET_NAME" > "$MARKER"
-
   echo "Done. Installed: $ASSET_NAME"
-
-  
 else
   echo "Dados já existem, a saltar download"
 fi
-
-
