@@ -1,7 +1,9 @@
 pyspark==3.5.2
 delta-spark==3.2.0
-pyarrow
+
 pandas
+pyarrow
+
 ipykernel
-jupyterlab
 notebook
+jupyterlab

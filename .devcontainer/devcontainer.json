@@ -4,20 +4,29 @@
     "dockerfile": "Dockerfile",
     "cacheFrom": ["type=gha"]
   },
-  "customizations": {
-    "vscode": {
-      "extensions": ["ms-python.python", "ms-toolsai.jupyter"]
-    }
-  },
-  "updateContentCommand": "",
-
   "workspaceFolder": "/workspaces/ApacheSpark-CD",
   "remoteUser": "vscode",
-  "postCreateCommand": "bash scripts/get_data.sh",
-  "remoteEnv": {
-    "VIRTUAL_ENV": "/opt/venv",
-    "PYSPARK_PYTHON": "/opt/venv/bin/python"
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspaces/ApacheSpark-CD/.venv/bin/python"
+      }
+    }
   },
+
+  "remoteEnv": {
+    "VIRTUAL_ENV": "/workspaces/ApacheSpark-CD/.venv",
+    "PYSPARK_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python",
+    "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
+  },
+
+  "postCreateCommand": "bash .devcontainer/bootstrap.sh && bash scripts/get_data.sh",
+
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "17"
