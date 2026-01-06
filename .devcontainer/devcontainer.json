@@ -1,5 +1,6 @@
 {
   "name": "pyspark-dev",
+  "dockerComposeFile": "docker-compose.yml",
   "build": {
     "dockerfile": "Dockerfile",
     "cacheFrom": ["type=gha"]
@@ -11,7 +12,9 @@
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-toolsai.jupyter"
+        "ms-toolsai.jupyter",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/workspaces/ApacheSpark-CD/.venv/bin/python"

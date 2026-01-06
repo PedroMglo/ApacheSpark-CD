@@ -6,9 +6,7 @@ from pyspark.sql.types import (
 from pathlib import Path
 
 
-
-
-def paths(folder_path,kind: str,pattern:str = "*"):
+def paths(folder_path, kind: str, pattern: str = "*"):
     """
     Retorna uma lista de caminhos (paths) para arquivos ou pastas dentro de um diretório,
     opcionalmente filtrados por um padrão (glob).
@@ -43,39 +41,45 @@ def paths(folder_path,kind: str,pattern:str = "*"):
     ['projetos/exp_01', 'projetos/exp_02']
     """
     kind = kind.lower()
-    
+
     if kind not in {"file", "folder"}:
         raise ValueError("Nenhum file/folder path atribuido")
-    
+
     base_path = Path(folder_path)
-    
+
     if kind == "file":
-        path = [path.as_posix() for path in base_path.glob(pattern) if path.is_file()]
+        path = [path.as_posix()
+                for path in base_path.glob(pattern) if path.is_file()]
 
     else:
-        path = [path.as_posix() for path in base_path.glob(pattern) if path.is_dir()]
-    
+        path = [path.as_posix()
+                for path in base_path.glob(pattern) if path.is_dir()]
+
     if not path:
-        warnings.warn(f"[WARN] Nenhum {kind} encontrado em {base_path} com pattern='{pattern}'")
+        warnings.warn(
+            f"[WARN] Nenhum {kind} encontrado em {base_path} com pattern='{pattern}'")
     return path
+
 
 def load_schema_json(schema_paths) -> dict:
 
-    schema_path = schema_paths[0] if isinstance(schema_paths, (list)) else schema_paths
-    
+    schema_path = schema_paths[0] if isinstance(
+        schema_paths, (list)) else schema_paths
+
     with open(schema_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def build_schema(table_name: str, schema_json: dict) -> StructType:
+
+def build_schema(table_name: str, schema_json: dict, type_mapping: dict) -> StructType:
     if table_name not in schema_json:
         raise KeyError(f"Tabela {table_name} não encontrada no JSON de schema")
-    fields = sorted(schema_json[table_name], key= lambda col: col["column_position"], reverse = False)
-    
+    fields = sorted(
+        schema_json[table_name], key=lambda col: col["column_position"], reverse=False)
+
     return StructType(
-       [ StructField(
-            field["column_name"]
-            ,type_mapping.get(field["data_type"].lower(),StringType())
-            ,True
+        [StructField(
+            field["column_name"], type_mapping.get(
+                field["data_type"].lower(), StringType()), True
         )
-        for field in fields]
+            for field in fields]
     )
