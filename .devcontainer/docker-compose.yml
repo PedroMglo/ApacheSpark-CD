@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -7,9 +7,14 @@ services:
       dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
-    network_mode: service:db # Compartilha o localhost com o banco
+    
+    # --- ADICIONE ESTA LINHA AQUI ---
+    command: sleep infinity
+    # --------------------------------
+    
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
@@ -17,12 +22,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres_password
-      POSTGRES_DB: retail_db
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
+    mem_limit: 1g  # Segurança extra para a base de dados
     volumes:
-      # Mapeia os seus scripts para a pasta de inicialização automática do Postgres
-      - ../data/retail_db/create_db.sql:/docker-entrypoint-initdb.d/1_create.sql
-      - ../data/retail_db/load_db_tables_pg.sql:/docker-entrypoint-initdb.d/2_load.sql
-      # Mapeia a pasta data para que o comando 'COPY' do Postgres encontre os CSVs
+      - ../data/retail_db/create_db_tables_pg.sql:/docker-entrypoint-initdb.d/1_create.sql
+      # - ../data/retail_db/create_db.sql:/docker-entrypoint-initdb.d/2_load.sql
       - ../data:/workspaces/ApacheSpark-CD/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
