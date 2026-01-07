@@ -28,12 +28,12 @@
       "ms-azuretools.vscode-docker",     // Ver logs, containers, imagens
       "ms-vscode-remote.remote-containers", // Ajuda com devcontainers
 
-      "eamodio.gitlens",                 // Visualização avançada de Git
-      "mhutchie.git-graph",              // Gráfico de branches
+      // "eamodio.gitlens",                 // Visualização avançada de Git
+      // "mhutchie.git-graph",              // Gráfico de branches
       // Markdown / documentação
       "yzhang.markdown-all-in-one",
-      "oderwat.indent-rainbow",          // Visualizar indentação
-      "usernamehw.errorlens"             // Erros em linha
+      "oderwat.indent-rainbow"          // Visualizar indentação
+      // "usernamehw.errorlens"             // Erros em linha
     ]
   ,
       "settings": {
