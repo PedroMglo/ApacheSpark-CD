@@ -34,14 +34,10 @@ CREATE DATABASE hr_db;
 EOF
 
 # 4. Executa scripts na retail_db
-echo "A correr create_db_tables_pg.sql..."
-psql -h "$DB_HOST" -U "$DB_USER" -d "retail_db" -f /workspaces/ApacheSpark-CD/data/retail_db/create_db_tables_pg.sql
+echo "A correr 1_create_db_tables_pg.sql..."
+psql -h "$DB_HOST" -U "$DB_USER" -d "retail_db" -f /workspaces/ApacheSpark-CD/SQL/1_create_db_tables_pg.sql
 
-# echo "A correr create_db.sql..."
-# psql -h "$DB_HOST" -U "$DB_USER" -d "retail_db" -f /workspaces/ApacheSpark-CD/data/retail_db/create_db.sql
+echo "A correr 2_inserts.sql..."
+psql -h "$DB_HOST" -U "$DB_USER" -d "retail_db" -f /workspaces/ApacheSpark-CD/SQL/2_inserts.sql
 
-echo "Concluído com sucesso! ✅"
-# # 3) Executa scripts na hr_db
-# # (Se este ficheiro não existir, comenta esta parte ou o script vai falhar)
-# psql -h "$DB_HOST" -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "hr_db" \
-#   -f /workspaces/ApacheSpark-CD/data/hr/hr_mysql.sql
+echo "Concluído com sucesso!"
