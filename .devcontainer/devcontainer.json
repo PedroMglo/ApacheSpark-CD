@@ -1,5 +1,5 @@
 {
-  "name": "pyspark-dev",
+  "name": "ApacheSpark-CD",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "runServices": ["db"],
@@ -57,7 +57,7 @@
     "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
   },
 
-  "postCreateCommand": "bash scripts/bootstrap.sh && bash scripts/get_data.sh",
+  "postCreateCommand": "bash scripts/bootstrap.sh && bash scripts/get_data.sh || true",
   "postStartCommand": "bash scripts/run_all_sql_files.sh",
 
   "features": {
