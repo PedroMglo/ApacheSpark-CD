@@ -9,7 +9,6 @@ metastore_db/
 *.crc
 
 # OS / Editor
-.vscode/
 .DS_Store
 
 data/
