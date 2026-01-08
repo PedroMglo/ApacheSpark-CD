@@ -32,8 +32,7 @@
       // "mhutchie.git-graph",              // Gráfico de branches
       // Markdown / documentação
       "yzhang.markdown-all-in-one",
-      "oderwat.indent-rainbow"          // Visualizar indentação
-      // "usernamehw.errorlens"             // Erros em linha
+      "oderwat.indent-rainbow"          
     ]
   ,
       "settings": {
