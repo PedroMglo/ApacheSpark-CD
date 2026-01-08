@@ -3,10 +3,27 @@
     {
       "name": "Postgres - admin",
       "driver": "PostgreSQL",
-      "previewLimit": 50,
       "server": "db",
       "port": 5432,
       "database": "postgres",
+      "username": "postgres",
+      "password": "postgres_password"
+    },
+    {
+      "name": "Postgres - retail_db",
+      "driver": "PostgreSQL",
+      "server": "db",
+      "port": 5432,
+      "database": "retail_db",
+      "username": "postgres",
+      "password": "postgres_password"
+    },
+    {
+      "name": "Postgres - hr_db",
+      "driver": "PostgreSQL",
+      "server": "db",
+      "port": 5432,
+      "database": "hr_db",
       "username": "postgres",
       "password": "postgres_password"
     }
