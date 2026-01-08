@@ -57,7 +57,7 @@
     "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
   },
 
-  "postCreateCommand": "bash scripts/bootstrap.sh && bash scripts/get_data.sh || true",
+  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && bash scripts/bootstrap.sh && bash scripts/get_data.sh",
   "postStartCommand": "bash scripts/run_all_sql_files.sh",
 
   "features": {
