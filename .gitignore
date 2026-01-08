@@ -12,3 +12,6 @@ metastore_db/
 .DS_Store
 
 data/
+
+pgdata/
+data/
