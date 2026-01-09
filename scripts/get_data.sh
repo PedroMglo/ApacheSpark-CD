@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="oioioioi3/ApacheSpark-CD"
+REPO="PedroMglo/ApacheSpark-CD"
 RELEASE_TAG="Spark-BD_V1"
 DATA_DIR="data"
 MARKER="$DATA_DIR/.ready"
