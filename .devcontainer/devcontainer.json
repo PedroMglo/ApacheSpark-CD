@@ -55,9 +55,8 @@
     "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
   },
 
-  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && pwd && ls && bash scripts/bootstrap.sh && bash scripts/get_data.sh",
-  "postStartCommand": "bash scripts/run_all_sql_files.sh",
-
+  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
+  "postStartCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh",
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "17"
