@@ -9,32 +9,30 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "tintinweb.graphviz-interactive-preview",
+        "shd101wyy.markdown-preview-enhanced",
+        // Python / qualidade de código
+        "ms-python.vscode-pylance", // IntelliSense rápido e bom
+        "ms-python.black-formatter", // Formatação automática com Black
+        "ms-python.isort", // Organização de imports
+        "charliermarsh.ruff", // Linter rápido (alternativa ao flake8)
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
 
-      "ms-python.python",
-      "ms-toolsai.jupyter",
-      "mtxr.sqltools",
-      "mtxr.sqltools-driver-pg",
-      "tintinweb.graphviz-interactive-preview",
-      "shd101wyy.markdown-preview-enhanced",
-      // Python / qualidade de código
-      "ms-python.vscode-pylance",        // IntelliSense rápido e bom
-      "ms-python.black-formatter",       // Formatação automática com Black
-      "ms-python.isort",                 // Organização de imports
-      "charliermarsh.ruff",              // Linter rápido (alternativa ao flake8)
-      "ms-toolsai.jupyter-keymap",
-      "ms-toolsai.jupyter-renderers",
+        // Docker / Dev Containers
+        "ms-azuretools.vscode-docker", // Ver logs, containers, imagens
+        "ms-vscode-remote.remote-containers", // Ajuda com devcontainers
 
-      // Docker / Dev Containers
-      "ms-azuretools.vscode-docker",     // Ver logs, containers, imagens
-      "ms-vscode-remote.remote-containers", // Ajuda com devcontainers
-
-      // "eamodio.gitlens",                 // Visualização avançada de Git
-      // "mhutchie.git-graph",              // Gráfico de branches
-      // Markdown / documentação
-      "yzhang.markdown-all-in-one",
-      "oderwat.indent-rainbow"          
-    ]
-  ,
+        // "eamodio.gitlens",                 // Visualização avançada de Git
+        // "mhutchie.git-graph",              // Gráfico de branches
+        // Markdown / documentação
+        "yzhang.markdown-all-in-one",
+        "oderwat.indent-rainbow"
+      ],
       "settings": {
         "python.defaultInterpreterPath": "/workspaces/ApacheSpark-CD/.venv/bin/python"
       }
@@ -46,9 +44,9 @@
     "_JAVA_OPTIONS": "-Xms512m -Xmx4g",
     "POSTGRES_USER": "postgres",
     "POSTGRES_PASSWORD": "postgres_password",
-    
+
     // MUDANÇA CRUCIAL: Agora apontamos para o nome do serviço no Docker Compose
-    "POSTGRES_HOST": "db" 
+    "POSTGRES_HOST": "db"
   },
 
   "remoteEnv": {
@@ -57,8 +55,9 @@
     "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
   },
 
-  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && pwd && ls && bash scripts/bootstrap.sh && bash scripts/get_data.sh",
-  "postStartCommand": "bash scripts/run_all_sql_files.sh",
+  // "postCreateCommand": "cd /workspaces/ApacheSpark-CD && pwd && ls && bash scripts/bootstrap.sh && bash scripts/get_data.sh",
+  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && bash .devcontainer/bootstrap.sh",
+  "postStartCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh",
 
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
@@ -66,5 +65,3 @@
     }
   }
 }
-
-
