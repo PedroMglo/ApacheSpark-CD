@@ -41,12 +41,7 @@
 
   "containerEnv": {
     "JAVA_OPTS": "-Xms512m -Xmx4g",
-    "_JAVA_OPTIONS": "-Xms512m -Xmx4g",
-    "POSTGRES_USER": "postgres",
-    "POSTGRES_PASSWORD": "${localEnv:POSTGRES_PASSWORD}",
-
-    // MUDANÇA CRUCIAL: Agora apontamos para o nome do serviço no Docker Compose
-    "POSTGRES_HOST": "db"
+    "_JAVA_OPTIONS": "-Xms512m -Xmx4g"
   },
 
   "remoteEnv": {
