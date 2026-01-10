@@ -21,7 +21,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_PASSWORD: "${localEnv:POSTGRES_PASSWORD}"
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
