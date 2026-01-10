@@ -1,8 +1,8 @@
 {
   "name": "ApacheSpark-CD",
   "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
-  "runServices": ["db"],
+  "service": "apache_spark",
+  "runServices": ["postgres_db"],
   "workspaceFolder": "/workspaces/ApacheSpark-CD",
   "remoteUser": "vscode",
 

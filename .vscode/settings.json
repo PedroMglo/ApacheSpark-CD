@@ -1,37 +1,32 @@
-{
-  "sqltools.connections": [
-    {
-      "ssh": "Disabled",
-      "previewLimit": 50,
-      "server": "db",
-      "port": 5432,
-      "name": "Postgres - admin",
-      "driver": "PostgreSQL",
-      "database": "postgres",
-      "username": "postgres",
-      "password": "postgres"
-    },
-    {
-      "ssh": "Disabled",
-      "previewLimit": 50,
-      "server": "db",
-      "port": 5432,
-      "name": "Postgres - hr_db",
-      "driver": "PostgreSQL",
-      "database": "hr_db",
-      "username": "postgres",
-      "password": "postgres"
-    },
-    {
-      "ssh": "Disabled",
-      "previewLimit": 50,
-      "server": "db",
-      "port": 5432,
-      "name": "Postgres - retail_db",
-      "driver": "PostgreSQL",
-      "database": "retail_db",
-      "username": "postgres",
-      "password": "postgres"
-    }
-  ]
-}
+{"sqltools.connections": [
+  {
+    "name": "Postgres - admin",
+    "driver": "PostgreSQL",
+    "server": "db",
+    "port": 5432,
+    "database": "postgres",
+    "username": "postgres",
+    "password": "postgres",
+    "previewLimit": 50
+  },
+  {
+    "name": "Postgres - hr_db",
+    "driver": "PostgreSQL",
+    "server": "db",
+    "port": 5432,
+    "database": "hr_db",
+    "username": "postgres",
+    "password": "postgres",
+    "previewLimit": 50
+  },
+  {
+    "name": "Postgres - retail_db",
+    "driver": "PostgreSQL",
+    "server": "db",
+    "port": 5432,
+    "database": "retail_db",
+    "username": "postgres",
+    "password": "postgres",
+    "previewLimit": 50
+  }
+]}
