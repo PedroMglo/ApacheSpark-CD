@@ -1,13 +1,16 @@
 # .devcontainer/Dockerfile
-FROM mcr.microsoft.com/devcontainers/python:3.11-bookworm
+FROM mcr.microsoft.com/devcontainers/base:bookworm
 
 USER root
 
-# Dependências de sistema (minimizadas)
 RUN set -eux; \
     apt-get update; \
     apt-get -y upgrade; \
     apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-venv \
+        python-is-python3 \
         openjdk-17-jre-headless \
         ca-certificates \
         curl \
@@ -20,7 +23,6 @@ RUN set -eux; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
-# Java (17 em Bookworm)
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
@@ -39,20 +41,23 @@ RUN set -eux; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
-# Python deps baked (melhor cache: copia só o requirements antes do resto do repo)
+# --- Python deps via venv (PEP 668 friendly) ---
 COPY .devcontainer/requirements.txt /tmp/requirements.txt
 
-USER vscode
-ENV PATH="/home/vscode/.local/bin:${PATH}"
-
 RUN set -eux; \
-    python -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
-    pip install --no-cache-dir -r /tmp/requirements.txt; \
-    python -m pip check
+    python -m venv /opt/venv; \
+    /opt/venv/bin/python -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
+    /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt; \
+    /opt/venv/bin/python -m pip check; \
+    chown -R vscode:vscode /opt/venv
 
+# Faz o venv ser o python/pip "default" para o user vscode
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+
+USER vscode
 WORKDIR /workspaces/ApacheSpark-CD
 
-# --- METADADOS ---
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
 LABEL org.opencontainers.image.revision=$GIT_COMMIT

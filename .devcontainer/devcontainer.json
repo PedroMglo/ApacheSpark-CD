@@ -28,19 +28,21 @@
         "oderwat.indent-rainbow"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python"
+        "python.defaultInterpreterPath": "/opt/venv/bin/python"
       }
     }
   },
 
   "containerEnv": {
     "JAVA_OPTS": "-Xms512m -Xmx4g",
-    "_JAVA_OPTIONS": "-Xms512m -Xmx4g"
+    "_JAVA_OPTIONS": "-Xms512m -Xmx4g",
+    "POSTGRES_HOST": "postgres_db",
+    "POSTGRES_PORT": "5432"
   },
 
   "remoteEnv": {
-    "PYSPARK_PYTHON": "/usr/local/bin/python",
-    "PYSPARK_DRIVER_PYTHON": "/usr/local/bin/python"
+    "PYSPARK_PYTHON": "/opt/venv/bin/python",
+    "PYSPARK_DRIVER_PYTHON": "/opt/venv/bin/python"
   },
 
   "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
