@@ -1,8 +1,9 @@
 pyspark==4.0.1
 delta-spark==4.0.1
-pandas
-pyarrow
-ipykernel
-notebook
-jupyterlab
 
+pandas>=2.2.0,<2.3
+pyarrow>=16,<18
+
+ipykernel>=6.29,<7
+notebook>=7.2,<8
+jupyterlab>=4.2,<5
