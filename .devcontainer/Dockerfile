@@ -33,6 +33,7 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 
+
 # --- METADADOS (rastreabilidade) ---
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
