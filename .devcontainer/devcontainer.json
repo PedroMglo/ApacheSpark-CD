@@ -50,5 +50,7 @@
     "PYSPARK_DRIVER_PYTHON": "/usr/local/bin/python"
   },
   "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
-  "postStartCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh"
+  "postStartCommand": "cd /workspaces/ApacheSpark-CD && sudo chown -R vscode:vscode data && sudo chmod -R u+rwX data && bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh"
 }
+
+

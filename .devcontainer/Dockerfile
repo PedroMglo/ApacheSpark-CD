@@ -28,8 +28,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Python deps "baked" na imagem (Spark 4.x + Delta 4.x)
 # Nota: pyspark==4.0.1 (Spark 4.0.1) + delta-spark==4.0.1 (Delta Lake 4.0.1)
-COPY requirements.txt /tmp/requirements.txt
-RUN python -m pip install --upgrade pip && \
+COPY .devcontainer/requirements.txt /tmp/requirements.txt
+RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 
