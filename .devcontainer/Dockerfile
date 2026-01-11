@@ -8,7 +8,7 @@ RUN set -eux; \
     apt-get update; \
     apt-get -y upgrade; \
     apt-get install -y --no-install-recommends \
-        openjdk-21-jre-headless \
+        openjdk-17-jre-headless \
         ca-certificates \
         curl \
         unzip \
@@ -20,11 +20,11 @@ RUN set -eux; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
-# Java
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+# Java (17 em Bookworm)
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-# GitHub CLI (gh) - instala via repo oficial
+# GitHub CLI (gh)
 RUN set -eux; \
     install -m 0755 -d /usr/share/keyrings; \
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
