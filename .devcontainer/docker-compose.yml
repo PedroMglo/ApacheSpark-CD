@@ -1,9 +1,9 @@
 services:
   apache_spark:
     image: pmglok/spark:active
-    pull_policy: always
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
+      - sparkdata:/workspaces/ApacheSpark-CD/data
     command: sleep infinity
     env_file:
       - .env
@@ -35,3 +35,4 @@ services:
 
 volumes:
   pgdata:
+  sparkdata:
