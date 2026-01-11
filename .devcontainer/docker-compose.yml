@@ -1,6 +1,14 @@
+# .devcontainer/docker-compose.yml
 services:
   apache_spark:
+    # Mantém o mesmo tag se quiseres continuar a chamar "pmglok/spark:active"
     image: pmglok/spark:active
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-}
+        BUILD_DATE: ${BUILD_DATE:-}
     user: vscode
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
