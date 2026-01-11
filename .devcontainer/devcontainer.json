@@ -5,6 +5,7 @@
   "runServices": ["postgres_db"],
   "workspaceFolder": "/workspaces/ApacheSpark-CD",
   "remoteUser": "vscode",
+  "updateRemoteUserUID": false,
 
   "customizations": {
     "vscode": {

@@ -1,9 +1,7 @@
 services:
   apache_spark:
-    # image: pmglok/spark:active
-    build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+    image: pmglok/spark:active
+    pull_policy: always
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
     command: sleep infinity
