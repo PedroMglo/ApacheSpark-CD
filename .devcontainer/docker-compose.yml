@@ -1,6 +1,7 @@
 services:
   apache_spark:
     image: pmglok/spark:active
+    user: vscode
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
       - sparkdata:/workspaces/ApacheSpark-CD/data

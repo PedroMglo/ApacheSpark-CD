@@ -5,7 +5,7 @@
   "runServices": ["postgres_db"],
   "workspaceFolder": "/workspaces/ApacheSpark-CD",
   "remoteUser": "vscode",
-  "updateRemoteUserUID": false,
+  "updateRemoteUserUID": true,
 
   "customizations": {
     "vscode": {
@@ -27,10 +27,6 @@
         // Docker / Dev Containers
         "ms-azuretools.vscode-docker", // Ver logs, containers, imagens
         "ms-vscode-remote.remote-containers", // Ajuda com devcontainers
-
-        // "eamodio.gitlens",                 // Visualização avançada de Git
-        // "mhutchie.git-graph",              // Gráfico de branches
-        // Markdown / documentação
         "yzhang.markdown-all-in-one",
         "oderwat.indent-rainbow"
       ],
@@ -52,5 +48,3 @@
   "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
   "postStartCommand": "cd /workspaces/ApacheSpark-CD && sudo chown -R vscode:vscode data && sudo chmod -R u+rwX data && bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh"
 }
-
-
