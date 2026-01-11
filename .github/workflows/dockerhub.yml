@@ -5,6 +5,12 @@ on:
     tags:
       - "v*.*.*"     # ex: v2.1.
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão para promover (ex: 0.1.5) — vai criar/atualizar :active"
+        required: true
+        type: string
+
 
 env:
   IMAGE_NAME: pmglok/spark
@@ -34,28 +40,43 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          SHA_TAG="sha-${GITHUB_SHA::7}"
           BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
           echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
 
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"   # v2.1.0 -> 2.1.0
-            echo "tags=${{ env.IMAGE_NAME }}:${VERSION},${{ env.IMAGE_NAME }}:active" >> $GITHUB_OUTPUT
+          # Caso 1: manual run -> promover versão existente para :active
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+            echo "mode=promote" >> $GITHUB_OUTPUT
             echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          else
-            echo "tags=${{ env.IMAGE_NAME }}:${SHA_TAG},${{ env.IMAGE_NAME }}:dev" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
-      - name: Build and push
+          # Caso 2: tag push -> build+push versão e :active
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "mode=release" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+
+      - name: Build and push (release)
+        if: steps.tags.outputs.mode == 'release'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .devcontainer/Dockerfile
           push: true
-          tags: ${{ steps.tags.outputs.tags }}
+          tags: pmglok/spark:${{ steps.tags.outputs.version }},pmglok/spark:active
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             BUILD_DATE=${{ steps.tags.outputs.build_date }}
+      
+      - name: Promote existing version to :active (manual)
+        if: steps.tags.outputs.mode == 'promote'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.tags.outputs.version }}"
+          docker pull pmglok/spark:${VERSION}
+          docker tag pmglok/spark:${VERSION} pmglok/spark:active
+          docker push pmglok/spark:active
+
+
