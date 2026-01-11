@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/devcontainers/python:3.11
 
 # Dependências de sistema
+USER root
 RUN apt-get update && apt-get install -y \
     openjdk-21-jdk \
     curl \
@@ -26,8 +27,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Python deps "baked" na imagem (Spark 4.x + Delta 4.x)
-# Nota: pyspark==4.0.1 (Spark 4.0.1) + delta-spark==4.0.1 (Delta Lake 4.0.1)
+# Python deps baked
 COPY .devcontainer/requirements.txt /tmp/requirements.txt
 
 USER vscode
@@ -36,13 +36,14 @@ ENV PATH="/home/vscode/.local/bin:${PATH}"
 RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Voltar a root se ainda precisares para mais instalações de SO (opcional)
-USER root
+# (Opcional) workdir default
+WORKDIR /workspaces/ApacheSpark-CD
 
-
-# --- METADADOS (rastreabilidade) ---
+# --- METADADOS ---
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
 LABEL org.opencontainers.image.revision=$GIT_COMMIT
 LABEL org.opencontainers.image.created=$BUILD_DATE
-# --- FIM METADADOS ---
+
+# Mantém o container vivo por default
+CMD ["sleep", "infinity"]
