@@ -1,4 +1,6 @@
 name: Build & Push to Docker Hub
+permissions:
+  contents: read
 
 on:
   push:
