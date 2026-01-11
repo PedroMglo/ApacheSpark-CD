@@ -24,3 +24,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get install -y gh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# --- METADADOS (rastreabilidade) ---
+ARG GIT_COMMIT=""
+ARG BUILD_DATE=""
+
+LABEL org.opencontainers.image.revision=$GIT_COMMIT
+LABEL org.opencontainers.image.created=$BUILD_DATE
+# --- FIM METADADOS ---

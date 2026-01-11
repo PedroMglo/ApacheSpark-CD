@@ -1,5 +1,6 @@
 services:
   apache_spark:
+    image: pmglok/spark:active
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile

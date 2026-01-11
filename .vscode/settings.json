@@ -29,4 +29,6 @@
     "password": "postgres",
     "previewLimit": 50
   }
-]}
+],
+"remote.autoForwardPortsFallback": 0
+}
