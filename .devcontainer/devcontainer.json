@@ -35,7 +35,7 @@
         "oderwat.indent-rainbow"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/workspaces/ApacheSpark-CD/.venv/bin/python"
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
       }
     }
   },
@@ -46,16 +46,9 @@
   },
 
   "remoteEnv": {
-    "VIRTUAL_ENV": "/workspaces/ApacheSpark-CD/.venv",
-    "PYSPARK_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python",
-    "PYSPARK_DRIVER_PYTHON": "/workspaces/ApacheSpark-CD/.venv/bin/python"
+    "PYSPARK_PYTHON": "/usr/local/bin/python",
+    "PYSPARK_DRIVER_PYTHON": "/usr/local/bin/python"
   },
-
   "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
-  "postStartCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh",
-  "features": {
-    "ghcr.io/devcontainers/features/java:1": {
-      "version": "17"
-    }
-  }
+  "postStartCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh"
 }
