@@ -1,34 +1,35 @@
-{"sqltools.connections": [
-  {
-    "name": "Postgres - admin",
-    "driver": "PostgreSQL",
-    "server": "db",
-    "port": 5432,
-    "database": "postgres",
-    "username": "postgres",
-    "password": "postgres",
-    "previewLimit": 50
-  },
-  {
-    "name": "Postgres - hr_db",
-    "driver": "PostgreSQL",
-    "server": "db",
-    "port": 5432,
-    "database": "hr_db",
-    "username": "postgres",
-    "password": "postgres",
-    "previewLimit": 50
-  },
-  {
-    "name": "Postgres - retail_db",
-    "driver": "PostgreSQL",
-    "server": "db",
-    "port": 5432,
-    "database": "retail_db",
-    "username": "postgres",
-    "password": "postgres",
-    "previewLimit": 50
-  }
-],
-"remote.autoForwardPortsFallback": 0
+{
+  "sqltools.connections": [
+    {
+      "name": "Postgres - admin",
+      "driver": "PostgreSQL",
+      "server": "postgres_db",
+      "port": 5432,
+      "database": "postgres",
+      "username": "postgres",
+      "password": "postgres",
+      "previewLimit": 50
+    },
+    {
+      "name": "Postgres - hr_db",
+      "driver": "PostgreSQL",
+      "server": "postgres_db",
+      "port": 5432,
+      "database": "hr_db",
+      "username": "postgres",
+      "password": "postgres",
+      "previewLimit": 50
+    },
+    {
+      "name": "Postgres - retail_db",
+      "driver": "PostgreSQL",
+      "server": "postgres_db",
+      "port": 5432,
+      "database": "retail_db",
+      "username": "postgres",
+      "password": "postgres",
+      "previewLimit": 50
+    }
+  ],
+  "remote.autoForwardPortsFallback": 0
 }
