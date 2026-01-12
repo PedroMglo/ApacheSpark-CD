@@ -28,7 +28,8 @@
         "oderwat.indent-rainbow"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/opt/venv/bin/python"
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "jupyter.jupyterServerType": "local"
       }
     }
   },
@@ -37,7 +38,9 @@
     "JAVA_OPTS": "-Xms512m -Xmx4g",
     "_JAVA_OPTIONS": "-Xms512m -Xmx4g",
     "POSTGRES_HOST": "postgres_db",
-    "POSTGRES_PORT": "5432"
+    "POSTGRES_PORT": "5432",
+    "SPARK_LOCAL_IP": "0.0.0.0",
+    "SPARK_DRIVER_BIND_ADDRESS": "0.0.0.0"
   },
 
   "remoteEnv": {
@@ -45,6 +48,16 @@
     "PYSPARK_DRIVER_PYTHON": "/opt/venv/bin/python"
   },
 
-  "postCreateCommand": "cd /workspaces/ApacheSpark-CD && set -e; bash scripts/bootstrap.sh",
-  "postStartCommand": "cd /workspaces/ApacheSpark-CD && sudo chown -R vscode:vscode data && sudo chmod -R u+rwX data && bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh"
+  "forwardPorts": [4040, 4041, 4042, 8888, 18080],
+  "portsAttributes": {
+    "4040": { "label": "Spark UI (Local Job)", "onAutoForward": "notify" },
+    "4041": { "label": "Spark UI (2)", "onAutoForward": "silent" },
+    "4042": { "label": "Spark UI (3)", "onAutoForward": "silent" },
+    "8888": { "label": "Jupyter", "onAutoForward": "notify" },
+    "18080": { "label": "Spark History Server", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "bash -lc 'cd /workspaces/ApacheSpark-CD && set -euo pipefail && bash scripts/bootstrap.sh'",
+
+  "postStartCommand": "bash -lc 'cd /workspaces/ApacheSpark-CD && set -euo pipefail; if [ -d data ] && [ ! -f data/.permissions_fixed ]; then sudo chown -R vscode:vscode data && sudo chmod -R u+rwX data && touch data/.permissions_fixed; fi; if [ ! -f data/.seeded ]; then bash scripts/get_data.sh && bash scripts/run_all_sql_files.sh && touch data/.seeded; fi'"
 }

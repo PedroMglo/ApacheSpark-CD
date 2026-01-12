@@ -1,11 +1,12 @@
 name: Build & Push to Docker Hub
+
 permissions:
   contents: read
 
 on:
   push:
     tags:
-      - "v*.*.*"     # ex: v2.1.
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
@@ -13,9 +14,12 @@ on:
         required: true
         type: string
 
-
 env:
   IMAGE_NAME: pmglok/spark
+
+concurrency:
+  group: dockerhub-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-and-push:
@@ -24,6 +28,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Compute version + build date
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "build_date=${BUILD_DATE}" >> "$GITHUB_OUTPUT"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RAW="${{ inputs.version }}"
+            VERSION="${RAW#v}"
+            echo "mode=promote" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          RAW="${GITHUB_REF_NAME}"
+          VERSION="${RAW#v}"
+          echo "mode=release" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -37,48 +62,40 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Compute tags
-        id: tags
-        shell: bash
-        run: |
-          set -euo pipefail
-          BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+      # Só para release (tag push): gera tags/labels automaticamente (semver + active)
+      - name: Docker metadata (release)
+        if: steps.meta.outputs.mode == 'release'
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ steps.meta.outputs.version }}
+            type=raw,value=active
 
-          # Caso 1: manual run -> promover versão existente para :active
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ inputs.version }}"
-            echo "mode=promote" >> $GITHUB_OUTPUT
-            echo "version=${VERSION}" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Caso 2: tag push -> build+push versão e :active
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          echo "mode=release" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-
-      - name: Build and push (release)
-        if: steps.tags.outputs.mode == 'release'
+      - name: Build & Push (multi-arch) - release
+        if: steps.meta.outputs.mode == 'release'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .devcontainer/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: pmglok/spark:${{ steps.tags.outputs.version }},pmglok/spark:active
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
           build-args: |
             GIT_COMMIT=${{ github.sha }}
-            BUILD_DATE=${{ steps.tags.outputs.build_date }}
-      
+            BUILD_DATE=${{ steps.meta.outputs.build_date }}
+          cache-from: type=gha,scope=${{ env.IMAGE_NAME }}
+          cache-to: type=gha,mode=max,scope=${{ env.IMAGE_NAME }}
+
+      # Manual: promove uma versão existente para :active sem fazer pull da imagem
       - name: Promote existing version to :active (manual)
-        if: steps.tags.outputs.mode == 'promote'
+        if: steps.meta.outputs.mode == 'promote'
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="${{ steps.tags.outputs.version }}"
-          docker pull pmglok/spark:${VERSION}
-          docker tag pmglok/spark:${VERSION} pmglok/spark:active
-          docker push pmglok/spark:active
-
-
+          VERSION="${{ steps.meta.outputs.version }}"
+          docker buildx imagetools create \
+            --tag "${IMAGE_NAME}:active" \
+            "${IMAGE_NAME}:${VERSION}"

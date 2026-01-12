@@ -1,7 +1,6 @@
 # .devcontainer/docker-compose.yml
 services:
   apache_spark:
-    # Mantém o mesmo tag se quiseres continuar a chamar "pmglok/spark:active"
     image: pmglok/spark:active
     build:
       context: ..
@@ -9,15 +8,39 @@ services:
       args:
         GIT_COMMIT: ${GIT_COMMIT:-}
         BUILD_DATE: ${BUILD_DATE:-}
+
     user: vscode
+    init: true
+    command: sleep infinity
+
     volumes:
       - ..:/workspaces/ApacheSpark-CD:cached
       - sparkdata:/workspaces/ApacheSpark-CD/data
-    command: sleep infinity
+
     env_file:
       - .env
+
     environment:
       POSTGRES_HOST: postgres_db
+      POSTGRES_PORT: "5432"
+
+      SPARK_LOCAL_IP: "0.0.0.0"
+      SPARK_DRIVER_BIND_ADDRESS: "0.0.0.0"
+
+      JAVA_OPTS: "-Xms512m -Xmx4g"
+      _JAVA_OPTIONS: "-Xms512m -Xmx4g"
+
+    # NÃO faz bind no host; VS Code faz forward via devcontainer.json
+    expose:
+      - "4040"
+      - "4041"
+      - "4042"
+      - "8888"
+      - "18080"
+
+    mem_limit: 6g
+    shm_size: "1g"
+
     depends_on:
       postgres_db:
         condition: service_healthy
@@ -31,14 +54,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+
     mem_limit: 1g
+
     volumes:
       - pgdata:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 30
+      start_period: 10s
 
 volumes:
   pgdata:
