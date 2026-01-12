@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SPARK_VERSION=4.0.1
+ARG SPARK_VERSION=4.1.1
 ARG SPARK_PACKAGE=spark-${SPARK_VERSION}-bin-hadoop3
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
@@ -40,7 +40,7 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # ---- Apache Spark (tarball) ----
 RUN set -eux; \
-    SPARK_TGZ_URL="https://www.apache.org/dyn/closer.lua/spark/spark-${SPARK_VERSION}/${SPARK_PACKAGE}.tgz?action=download"; \
+    SPARK_TGZ_URL="https://downloads.apache.org/spark/spark-${SPARK_VERSION}/${SPARK_PACKAGE}.tgz"; \
     mkdir -p /opt; \
     curl -fL "${SPARK_TGZ_URL}" -o /tmp/spark.tgz; \
     tar -xzf /tmp/spark.tgz -C /opt; \
