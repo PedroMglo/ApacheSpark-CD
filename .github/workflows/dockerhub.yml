@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Versão para promover (ex: 0.1.5) — vai criar/atualizar :active"
+        description: "Inserir valor da tag para a qual a imagem deve ser alterada (ex: 0.1.5) — vai criar/atualizar :active"
         required: true
         type: string
 
