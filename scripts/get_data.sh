@@ -4,52 +4,35 @@ set -euo pipefail
 # ---------------------------
 # Config (podes sobrescrever via env)
 # ---------------------------
+REPO_ROOT="${REPO_ROOT:-/workspaces/ApacheSpark-CD}"
 REPO="${REPO:-PedroMglo/ApacheSpark-CD}"
 RELEASE_TAG="${RELEASE_TAG:-Spark-BD_V1}"
-DATA_DIR="${DATA_DIR:-data}"
+
+# data tem de ficar ao nível do root do repo
+DATA_DIR="${DATA_DIR:-$REPO_ROOT/data}"
 MARKER="${MARKER:-$DATA_DIR/.ready}"
 
-# Se estiver a 1, falha caso gh não esteja autenticado (modo "estrito")
-REQUIRE_GH_AUTH="${REQUIRE_GH_AUTH:-0}"
+REQUIRE_GH_AUTH="${REQUIRE_GH_AUTH}"
+FORCE_DATA_DOWNLOAD="${FORCE_DATA_DOWNLOAD}"
 
-# Se estiver a 1, força download mesmo que exista marker
-FORCE_DATA_DOWNLOAD="${FORCE_DATA_DOWNLOAD:-0}"
-
-# ---------------------------
-# Helpers
-# ---------------------------
 log()  { printf '%s\n' "$*"; }
 warn() { printf 'WARN: %s\n' "$*" >&2; }
 die()  { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
-# "soft die": para não bloquear o devcontainer (sai com 0)
-soft_fail() {
-  warn "$*"
-  exit 0
-}
+# Não bloquear o devcontainer por defeito
+soft_fail() { warn "$*"; exit 0; }
 
 need_cmd() {
-  command -v "$1" >/dev/null 2>&1 || soft_fail "Comando obrigatório não encontrado: $1 (vou continuar sem descarregar dados)"
+  command -v "$1" >/dev/null 2>&1 || soft_fail "Comando obrigatório não encontrado: $1"
 }
 
-# Proteção simples contra zip-slip: recusa entradas com '..' ou paths absolutos
-zip_is_safe() {
-  local zip="$1"
-  unzip -Z1 "$zip" | awk '
-    /^\// { bad=1 }
-    /\.\.\// { bad=1 }
-    END { exit bad ? 1 : 0 }
-  '
-}
-
-# ---------------------------
-# Pré-checks
-# ---------------------------
+cd "$REPO_ROOT"
 need_cmd gh
-need_cmd unzip
+need_cmd python
 need_cmd sed
 need_cmd sort
 need_cmd tail
+need_cmd head
 
 mkdir -p "$DATA_DIR"
 
@@ -70,31 +53,18 @@ log "Data dir: $DATA_DIR"
 
 # ---------------------------
 # GitHub auth (não bloqueante por defeito)
-# - tenta autenticar automaticamente se existir GH_TOKEN
 # ---------------------------
-if ! gh auth status -h github.com >/dev/null 2>&1; then
-  if [[ -n "${GH_TOKEN:-}" ]]; then
-    log "Token detetado (GH_TOKEN). A tentar autenticar o GitHub CLI..."
-    TOKEN="${GH_TOKEN}"
-    echo "${TOKEN}" | gh auth login --with-token >/dev/null 2>&1 || true
-  fi
-fi
-
 if gh auth status -h github.com >/dev/null 2>&1; then
   log "GitHub auth: OK"
 else
   if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "Não estás autenticado no GitHub CLI. Corre: gh auth login (ou define GH_TOKEN)."
+    die "Não estás autenticado no GitHub CLI. Corre: gh auth login"
   fi
   warn "Não estás autenticado no GitHub CLI. Vou tentar na mesma (pode falhar se o repo/release for privado)."
 fi
 
 # ---------------------------
 # Lista assets e escolhe o mais recente
-# Aceita:
-#   - data_YYYY-MM-DD.zip  (ordem lexicográfica funciona)
-#   - data_vX.Y.Z.zip      (ordem semver)
-# Se existirem ambos, dá prioridade ao de data (mais explícito).
 # ---------------------------
 log "A procurar assets na release '$RELEASE_TAG'..."
 
@@ -106,13 +76,12 @@ assets="$(
   2>/dev/null || true
 )"
 
-# Aqui está a principal diferença: em vez de die -> soft_fail (a não ser modo estrito)
-if [[ -z "$assets" ]]; then
+[[ -n "$assets" ]] || {
   if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
     die "Não consegui obter assets da release. Confirma REPO/RELEASE_TAG e permissões."
   fi
-  soft_fail "Não consegui obter assets da release. Confirma REPO/RELEASE_TAG e permissões. (não vou bloquear o devcontainer)"
-fi
+  soft_fail "Não consegui obter assets da release. Confirma REPO/RELEASE_TAG e permissões."
+}
 
 latest_date="$(
   printf '%s\n' "$assets" \
@@ -135,17 +104,13 @@ if [[ -z "${ASSET_NAME}" ]]; then
   log "Esperado: data_YYYY-MM-DD.zip ou data_vX.Y.Z.zip"
   log "Assets disponíveis:"
   printf '%s\n' "$assets"
-
-  if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    exit 1
-  fi
   exit 0
 fi
 
 log "Asset escolhido: $ASSET_NAME"
 
 # ---------------------------
-# Download e unzip
+# Download
 # ---------------------------
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
@@ -164,27 +129,68 @@ fi
 
 zip_path="$tmpdir/$ASSET_NAME"
 if [[ ! -f "$zip_path" ]]; then
-  if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "Download falhou: não encontrei $zip_path"
-  fi
-  soft_fail "Download falhou: não encontrei $zip_path (vou continuar sem bloquear o devcontainer)"
+  # fallback: qualquer zip que tenha vindo
+  zip_path="$(ls -1 "$tmpdir"/*.zip 2>/dev/null | head -n 1 || true)"
 fi
 
-if ! zip_is_safe "$zip_path"; then
-  if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "ZIP parece inseguro (paths absolutos ou '..'). A abortar unzip."
-  fi
-  soft_fail "ZIP parece inseguro (paths absolutos ou '..'). Não vou extrair. (não vou bloquear o devcontainer)"
+[[ -f "${zip_path:-}" ]] || soft_fail "Download falhou: não encontrei o zip em $tmpdir"
+
+# ---------------------------
+# Extração robusta: extrai TUDO o que estiver dentro de qualquer pasta 'data/'
+# e copia para $DATA_DIR removendo prefixos (evita data/data e evita wrapper dirs)
+# ---------------------------
+log "A extrair conteúdos de '.../data/*' do zip para $DATA_DIR ..."
+
+export ZIP_PATH="$zip_path"
+export DATA_DIR="$DATA_DIR"
+
+python - <<'PY'
+import os, zipfile
+from pathlib import Path, PurePosixPath
+
+zip_path = os.environ["ZIP_PATH"]
+data_dir = Path(os.environ["DATA_DIR"])
+data_dir.mkdir(parents=True, exist_ok=True)
+
+def safe_join(base: Path, rel: PurePosixPath) -> Path:
+    # evita zip-slip
+    target = (base / Path(*rel.parts)).resolve()
+    if not str(target).startswith(str(base.resolve())):
+        raise ValueError(f"Unsafe path (zip-slip): {rel}")
+    return target
+
+count = 0
+with zipfile.ZipFile(zip_path) as z:
+    names = [n for n in z.namelist() if n and not n.endswith("/")]
+    # pega entradas que contenham um segmento 'data'
+    for n in names:
+        p = PurePosixPath(n)
+        parts = p.parts
+        if "data" not in parts:
+            continue
+        i = parts.index("data")
+        rel = PurePosixPath(*parts[i+1:])
+        if len(rel.parts) == 0:
+            continue  # era a pasta data, sem ficheiro
+        target = safe_join(data_dir, rel)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with z.open(n) as src, open(target, "wb") as dst:
+            dst.write(src.read())
+        count += 1
+
+print(f"[get_data] extracted_files={count}")
+if count == 0:
+    print("[get_data] WARN: não encontrei ficheiros dentro de nenhuma pasta 'data/' no zip.")
+PY
+
+# Só cria marker se houver ficheiros em DATA_DIR
+file_count="$(find "$DATA_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')"
+log "Ficheiros em $DATA_DIR: $file_count"
+
+if [[ "$file_count" -eq 0 ]]; then
+  warn "A pasta data continua vazia. Não vou criar marker."
+  exit 0
 fi
 
-log "A extrair para '$DATA_DIR'..."
-if ! unzip -o "$zip_path" -d "$DATA_DIR" >/dev/null 2>&1; then
-  if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "Falhou unzip do dataset."
-  fi
-  soft_fail "Falhou unzip do dataset. Vou continuar sem bloquear o devcontainer."
-fi
-
-# Marca como pronto (guarda o nome instalado)
 echo "$ASSET_NAME" > "$MARKER"
 log "Done. Installed: $ASSET_NAME"

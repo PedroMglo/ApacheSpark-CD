@@ -1,7 +1,7 @@
 # .devcontainer/Dockerfile
-# Devcontainer for studying Apache Spark 4.x (Spark 4.0.1 + PySpark 4.0.1 + Delta 4.0.1)
+# Devcontainer for studying Apache Spark 4.x with Python 3.12 (Ubuntu 24.04)
 
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+FROM mcr.microsoft.com/devcontainers/base:1.2.0-ubuntu-24.04
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -37,7 +37,6 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # ---- Apache Spark (tarball) ----
-# Using the official closer.lua download pattern (same as apache/spark image uses for 4.0.1) :contentReference[oaicite:3]{index=3}
 RUN set -eux; \
     SPARK_TGZ_URL="https://www.apache.org/dyn/closer.lua/spark/spark-${SPARK_VERSION}/${SPARK_PACKAGE}.tgz?action=download"; \
     mkdir -p /opt; \
