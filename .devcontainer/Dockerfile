@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SPARK_VERSION=4.1.1
+ARG SPARK_VERSION=4.0.1
 ARG SPARK_PACKAGE=spark-${SPARK_VERSION}-bin-hadoop3
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
