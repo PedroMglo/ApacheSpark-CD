@@ -16,6 +16,7 @@ ARG BUILD_DATE=""
 # ---- OS deps ----
 RUN set -eux; \
     apt-get update; \
+    apt-get -y upgrade; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
@@ -29,6 +30,7 @@ RUN set -eux; \
         openjdk-17-jre-headless \
     ; \
     git lfs install; \
+    apt-get -y autoremove --purge; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -57,7 +59,9 @@ RUN set -eux; \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
       > /etc/apt/sources.list.d/github-cli.list; \
     apt-get update; \
+    apt-get -y upgrade; \
     apt-get install -y --no-install-recommends gh; \
+    apt-get -y autoremove --purge; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
