@@ -4,16 +4,14 @@ permissions:
   contents: read
 
 on:
-  # Deploy só depois de um PR para main ser merged
   pull_request:
     branches: ["main"]
     types: ["closed"]
 
-  # Mantém o promote manual para :active
   workflow_dispatch:
     inputs:
       version:
-        description: "Inserir valor da tag (ex: 0.1.5) — vai apontar :active para essa versão"
+        description: "Inserir tag/versão (ex: 0.1.5 ou v0.1.5) — aponta :active para essa versão"
         required: true
         type: string
 
@@ -26,17 +24,16 @@ concurrency:
 
 jobs:
   build-and-push:
-    # Só corre se o PR foi efetivamente MERGED
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (main at merge commit)
+      - name: Checkout (merge commit)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute version + build date
+      - name: Compute version + build date (from release/* branch name)
         id: meta
         shell: bash
         run: |
@@ -44,55 +41,43 @@ jobs:
           BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           echo "build_date=${BUILD_DATE}" >> "$GITHUB_OUTPUT"
 
-          # Strategy: version comes from the latest v*.*.* tag on main.
-          # If there is no tag, we skip the release.
-          if git tag --list "v*.*.*" --sort=-v:refname | head -n 1 >/tmp/latest_tag; then
-            LATEST_TAG="$(cat /tmp/latest_tag || true)"
-          else
-            LATEST_TAG=""
+          # Espera que a head branch seja release/vX.Y.Z
+          HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          # remove prefix "release/"
+          TAG="${HEAD_REF#release/}"
+
+          # valida formato v*.*.* (basic)
+          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Branch não parece release/vX.Y.Z (era: ${HEAD_REF}). A abortar."
+            exit 1
           fi
 
-          if [[ -z "${LATEST_TAG}" ]]; then
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          VERSION="${LATEST_TAG#v}"
-          echo "mode=release" >> "$GITHUB_OUTPUT"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Stop if no semver tag found
-        if: steps.meta.outputs.mode == 'skip'
-        run: echo "No v*.*.* tag found on main, skipping Docker release."
 
       - name: Set up QEMU
-        if: steps.meta.outputs.mode == 'release'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        if: steps.meta.outputs.mode == 'release'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: steps.meta.outputs.mode == 'release'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker metadata (release)
-        if: steps.meta.outputs.mode == 'release'
+      - name: Docker metadata
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=v${{ steps.meta.outputs.version }}
+            type=raw,value=${{ steps.meta.outputs.tag }}
             type=raw,value=active
 
-      - name: Build & Push (amd64) - release
-        if: steps.meta.outputs.mode == 'release'
+      - name: Build & Push (amd64)
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -108,7 +93,6 @@ jobs:
           cache-to: type=gha,mode=min,scope=${{ env.IMAGE_NAME }}
 
   promote-active:
-    # Mantém promote manual como tens hoje
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
@@ -127,7 +111,9 @@ jobs:
         run: |
           set -euo pipefail
           RAW="${{ inputs.version }}"
-          VERSION="${RAW#v}"
+          RAW="${RAW#release/}"
+          RAW="${RAW#v}"
+          VERSION="${RAW}"
           docker buildx imagetools create \
             --tag "${IMAGE_NAME}:active" \
             "${IMAGE_NAME}:v${VERSION}"
