@@ -1,10 +1,7 @@
 # .devcontainer/Dockerfile
-# Devcontainer for studying Apache Spark 4.x with Python 3.12 (Ubuntu 24.04)
-
-FROM mcr.microsoft.com/devcontainers/base:1.2.0-ubuntu-24.04
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -28,6 +25,7 @@ RUN set -eux; \
         python3-venv \
         python-is-python3 \
         openjdk-17-jre-headless \
+        jq \
     ; \
     git lfs install; \
     apt-get -y autoremove --purge; \
@@ -50,27 +48,13 @@ RUN set -eux; \
 ENV SPARK_HOME=/opt/spark
 ENV PATH="${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}"
 
-# ---- GitHub CLI (gh) ----
-RUN set -eux; \
-    install -m 0755 -d /usr/share/keyrings; \
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-      -o /usr/share/keyrings/githubcli-archive-keyring.gpg; \
-    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg; \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-      > /etc/apt/sources.list.d/github-cli.list; \
-    apt-get update; \
-    apt-get -y upgrade; \
-    apt-get install -y --no-install-recommends gh; \
-    apt-get -y autoremove --purge; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists/*
-
-# ---- Python deps via venv (PEP 668 friendly) ----
+# ---- Python deps via venv ----
 COPY .devcontainer/requirements.txt /tmp/requirements.txt
 
 RUN set -eux; \
     python -m venv /opt/venv; \
-    /opt/venv/bin/python -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
+    /opt/venv/bin/python -m pip install --no-cache-dir --upgrade \
+      "pip" "wheel" "setuptools>=78.1.1"; \
     /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt; \
     /opt/venv/bin/python -m pip check; \
     chown -R vscode:vscode /opt/venv
@@ -78,7 +62,6 @@ RUN set -eux; \
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
 
-# Helpful defaults for Spark in containers (bind UI to all interfaces)
 ENV SPARK_LOCAL_IP=0.0.0.0
 ENV SPARK_DRIVER_BIND_ADDRESS=0.0.0.0
 

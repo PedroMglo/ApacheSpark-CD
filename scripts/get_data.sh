@@ -12,8 +12,9 @@ RELEASE_TAG="${RELEASE_TAG:-Spark-BD_V1}"
 DATA_DIR="${DATA_DIR:-$REPO_ROOT/data}"
 MARKER="${MARKER:-$DATA_DIR/.ready}"
 
-REQUIRE_GH_AUTH="${REQUIRE_GH_AUTH}"
-FORCE_DATA_DOWNLOAD="${FORCE_DATA_DOWNLOAD}"
+# Defaults seguros (não rebenta se não existirem)
+REQUIRE_GH_AUTH="${REQUIRE_GH_AUTH:-0}"
+FORCE_DATA_DOWNLOAD="${FORCE_DATA_DOWNLOAD:-0}"
 
 log()  { printf '%s\n' "$*"; }
 warn() { printf 'WARN: %s\n' "$*" >&2; }
@@ -27,12 +28,15 @@ need_cmd() {
 }
 
 cd "$REPO_ROOT"
-need_cmd gh
+need_cmd curl
+need_cmd jq
 need_cmd python
 need_cmd sed
 need_cmd sort
 need_cmd tail
 need_cmd head
+need_cmd find
+need_cmd wc
 
 mkdir -p "$DATA_DIR"
 
@@ -40,11 +44,11 @@ if [[ "$FORCE_DATA_DOWNLOAD" == "1" ]]; then
   rm -f "$MARKER"
 fi
 
-if [[ -f "$MARKER" ]]; then
-  log "Dados já existem (marker encontrado em $MARKER). A saltar download."
-  log "Instalado: $(cat "$MARKER" 2>/dev/null || true)"
-  exit 0
-fi
+# if [[ -f "$MARKER" ]]; then
+#   log "Dados já existem (marker encontrado em $MARKER). A saltar download."
+#   log "Instalado: $(cat "$MARKER" 2>/dev/null || true)"
+#   exit 0
+# fi
 
 log "A descarregar datasets..."
 log "Repo: $REPO"
@@ -52,15 +56,39 @@ log "Release tag: $RELEASE_TAG"
 log "Data dir: $DATA_DIR"
 
 # ---------------------------
-# GitHub auth (não bloqueante por defeito)
+# GitHub API (token opcional)
 # ---------------------------
-if gh auth status -h github.com >/dev/null 2>&1; then
-  log "GitHub auth: OK"
-else
+API="https://api.github.com/repos/${REPO}/releases/tags/${RELEASE_TAG}"
+
+AUTH_HEADERS=()
+if [[ -n "${GH_TOKEN:-}" ]]; then
+  # Bearer funciona para tokens modernos (fine-grained e classic)
+  AUTH_HEADERS=(-H "Authorization: Bearer ${GH_TOKEN}")
+fi
+
+# Faz o request uma vez e guarda o JSON (evita chamadas repetidas)
+release_json="$(
+  curl -fsSL \
+    -H "Accept: application/vnd.github+json" \
+    "${AUTH_HEADERS[@]}" \
+    "$API" \
+  2>/dev/null || true
+)"
+
+if [[ -z "$release_json" ]]; then
   if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "Não estás autenticado no GitHub CLI. Corre: gh auth login"
+    die "Não consegui obter a release via GitHub API. Confirma REPO/RELEASE_TAG e permissões (token)."
   fi
-  warn "Não estás autenticado no GitHub CLI. Vou tentar na mesma (pode falhar se o repo/release for privado)."
+  soft_fail "Não consegui obter a release via GitHub API. Confirma REPO/RELEASE_TAG e permissões (token)."
+fi
+
+# Valida se a API devolveu erro/404
+msg="$(printf '%s' "$release_json" | jq -r '.message? // empty' 2>/dev/null || true)"
+if [[ -n "$msg" && "$msg" != "null" ]]; then
+  if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
+    die "GitHub API respondeu: $msg (confirma token/permissões ou se a release existe)."
+  fi
+  soft_fail "GitHub API respondeu: $msg (confirma token/permissões ou se a release existe)."
 fi
 
 # ---------------------------
@@ -69,11 +97,7 @@ fi
 log "A procurar assets na release '$RELEASE_TAG'..."
 
 assets="$(
-  gh release view "$RELEASE_TAG" \
-    --repo "$REPO" \
-    --json assets \
-    --jq '.assets[].name' \
-  2>/dev/null || true
+  printf '%s' "$release_json" | jq -r '.assets[]?.name' 2>/dev/null || true
 )"
 
 [[ -n "$assets" ]] || {
@@ -109,31 +133,36 @@ fi
 
 log "Asset escolhido: $ASSET_NAME"
 
+asset_url="$(
+  printf '%s' "$release_json" \
+    | jq -r --arg NAME "$ASSET_NAME" '.assets[] | select(.name==$NAME) | .browser_download_url' \
+    2>/dev/null || true
+)"
+
+[[ -n "$asset_url" && "$asset_url" != "null" ]] || soft_fail "Não encontrei browser_download_url para $ASSET_NAME"
+
 # ---------------------------
 # Download
 # ---------------------------
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
-log "A descarregar asset da release..."
-if ! gh release download "$RELEASE_TAG" \
-  --repo "$REPO" \
-  --pattern "$ASSET_NAME" \
-  --dir "$tmpdir" \
+zip_path="$tmpdir/$ASSET_NAME"
+
+log "A descarregar asset da release via curl..."
+if ! curl -fL \
+  -H "Accept: application/octet-stream" \
+  "${AUTH_HEADERS[@]}" \
+  -o "$zip_path" \
+  "$asset_url" \
   >/dev/null 2>&1; then
   if [[ "$REQUIRE_GH_AUTH" == "1" ]]; then
-    die "Falhou download via gh. Confirma permissões/token e a release."
+    die "Falhou download via curl/GitHub API. Confirma permissões/token e a release."
   fi
-  soft_fail "Falhou download via gh. Vou continuar sem bloquear o devcontainer."
+  soft_fail "Falhou download via curl/GitHub API. Vou continuar sem bloquear o devcontainer."
 fi
 
-zip_path="$tmpdir/$ASSET_NAME"
-if [[ ! -f "$zip_path" ]]; then
-  # fallback: qualquer zip que tenha vindo
-  zip_path="$(ls -1 "$tmpdir"/*.zip 2>/dev/null | head -n 1 || true)"
-fi
-
-[[ -f "${zip_path:-}" ]] || soft_fail "Download falhou: não encontrei o zip em $tmpdir"
+[[ -f "$zip_path" ]] || soft_fail "Download falhou: não encontrei o zip em $tmpdir"
 
 # ---------------------------
 # Extração robusta: extrai TUDO o que estiver dentro de qualquer pasta 'data/'
