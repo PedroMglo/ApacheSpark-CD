@@ -10,9 +10,9 @@ ARG SPARK_PACKAGE=spark-${SPARK_VERSION}-bin-hadoop3
 ARG GIT_COMMIT=""
 ARG BUILD_DATE=""
 
-# ---- OS deps (cache-friendly; no apt upgrade) ----
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
+# ---- OS deps (cache-friendly; no apt upgrade; multi-arch safe) ----
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache-${TARGETPLATFORM} \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETPLATFORM} \
     set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
