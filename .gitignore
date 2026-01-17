@@ -14,4 +14,3 @@ metastore_db/
 pgdata/
 data/
 .devcontainer/.env
-

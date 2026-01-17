@@ -1,4 +1,3 @@
-# .devcontainer/docker-compose.yml
 services:
   apache_spark:
     image: pmglok/spark:active
@@ -17,27 +16,21 @@ services:
       - ..:/workspaces/ApacheSpark-CD:cached
       - sparkdata:/workspaces/ApacheSpark-CD/data
 
-    env_file:
-      - .env
-
     environment:
-      POSTGRES_HOST: postgres_db
-      POSTGRES_PORT: "5432"
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres_db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-sparkdb}
+      REQUIRE_GH_AUTH: ${REQUIRE_GH_AUTH:-1}
+      FORCE_DATA_DOWNLOAD: ${FORCE_DATA_DOWNLOAD:-0}
 
       SPARK_LOCAL_IP: "0.0.0.0"
       SPARK_DRIVER_BIND_ADDRESS: "0.0.0.0"
-
       JAVA_OPTS: "-Xms512m -Xmx4g"
       _JAVA_OPTIONS: "-Xms512m -Xmx4g"
 
-    # NÃO faz bind no host; VS Code faz forward via devcontainer.json
-    expose:
-      - "4040"
-      - "4041"
-      - "4042"
-      - "8888"
-      - "18080"
-
+    expose: ["4040", "4041", "4042", "8888", "18080"]
     mem_limit: 6g
     shm_size: "1g"
 
@@ -48,20 +41,22 @@ services:
   postgres_db:
     image: postgres:15
     restart: always
-    env_file:
-      - .env
+
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-sparkdb}
 
     mem_limit: 1g
-
     volumes:
       - pgdata:/var/lib/postgresql/data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sparkdb}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 30
